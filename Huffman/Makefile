@@ -1,2 +1,2 @@
 huff: Huffman.c
-	gcc -O3 -ansi Huffman.c -o huff
+	gcc -g -O3 -ansi Huffman.c -o huff
