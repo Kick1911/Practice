@@ -1,18 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include "LinkedList.c"
+#include <linked.h>
 
 #define FREQ_SIZE (125)
 #define NUM_OF_CHAR (27)
-#define ALLOC_CHILDREN ((trie_t*)malloc(sizeof(int) * NUM_OF_CHAR)) 
 
 int freq[FREQ_SIZE];
-
-typedef struct trie{
-	int name;
-	struct trie* children;
-} trie_t;
 
 void display(int* array){
 	int i = 0;
@@ -21,32 +15,26 @@ void display(int* array){
 	printf("\n");
 }
 
-int insert(trie_t* children, int i){
-	trie_t* ptr = children;
-	while( (*ptr).name != 0 ){ ptr++; }
-	trie_t temp;
-	temp.name = i;
-	temp.children = ALLOC_CHILDREN;
-	*ptr = temp;
-	free(temp.children);
-	printf("%d ",(*ptr).name);
-}
-
-int build_trie(trie_t tree, int* array){
-	tree.name = '\0';
-	tree.children = ALLOC_CHILDREN; /* I should know the size before hand  */
+int build_trie(int* array){
 	int i = 0;
+	linked_list_t list;
+	struct Node top, temp;
+	list.head = &top;
+	top.data = '\0';
+	struct Node* ptr = list.head;
 	while( i < FREQ_SIZE ){
-		if( array[i++] != 0 ){
-			insert(tree.children, i);
+		if( array[i] != 0 ){
+			temp.data = i;
+			(*ptr).next = &temp;
+			printf("%c ",(*(*ptr).next).data);
 		}
+		i++;
 	}
 	printf("\n");
-	free(tree.children);
+	/* display_linked_list(list); */
 }
 
 int compress(char* buffer, int length){
-	trie_t tree;
 	int i = 0;
 	while( i < length )
 		freq[(int)buffer[i++]] += 1;
@@ -54,7 +42,25 @@ int compress(char* buffer, int length){
 	freq['\0'] = 0;
 	freq[' '] = 0;
 	display(freq);
-	build_trie(tree, freq);
+	build_trie(freq);
+}
+
+void test(){
+	linked_list_t l;
+	struct Node a;
+	l.head = &a;
+	struct Node b;
+	a.data = 'k';
+	b.data = 'i';
+	a.next = &b;
+	int i = 1; while( i < 10 ){
+		struct Node temp;
+		temp.data = i++;
+		printf("%d ",temp.data);
+	}
+	struct Node* ptr = l.head;
+	printf("%c\n",(*ptr).data);
+	printf("%c\n",(*(*ptr).next).data);
 }
 
 int main(int argc, char** argv){
@@ -62,8 +68,6 @@ int main(int argc, char** argv){
 	long l_size;
 	char* buffer;
 	size_t result;
-	trie_t test;
-	trie_t* ptr = &test;
 
 	pfile = fopen("test.data","rb");
 	if( pfile == NULL ){ fprintf(stderr,"File not found.\n"); exit(1);}
