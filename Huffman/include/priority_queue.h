@@ -13,9 +13,10 @@ typedef struct heap{
 	int N;
 } heap_t;
 
+void swap(struct Node*, struct Node*);
 void print_heap(heap_t*);
 int insert(heap_t*, struct Node*);
 int insert_new_node(heap_t*, char, int, struct Node*);
-struct Node* delMax(heap_t*);
+int delMax(heap_t*, struct Node*);
 
 #endif

@@ -13,7 +13,7 @@ void display(int* array){
 	printf("\n");
 }
 
-struct Node* build_trie(heap_t* pq, int* array){
+struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 	int i = 0;
 	(*pq).h = ALLOC_HEAP(FREQ_SIZE);
 	(*pq).N = 0;
@@ -23,40 +23,59 @@ struct Node* build_trie(heap_t* pq, int* array){
 			struct Node n;
 			n.data = i;
 			n.freq = array[i];
+			n.left = NULL;
+			n.right = NULL;
 			insert(pq, &n);
 		}
 		i++;
 	}
 
-	print_heap(pq);
+	node* left,* right,* n;
 	while( (*pq).N > 1 ){
-		struct Node* left = delMax(pq);
-		struct Node* right = delMax(pq);
-		struct Node n;
-		n.data = '\0';
-		n.freq = (*left).freq + (*right).freq;
-		n.left = left;
-		n.right = right;
-		insert(pq, &n);
+		right = (node*) malloc(sizeof(node*));
+		left = (node*) malloc(sizeof(node*));
+		n = (node*) malloc(sizeof(node*));
+		printf("%x, %x\n", left, right);
+		delMax(pq, right);
+		delMax(pq, left);
+		(*n).data = '\0';
+		(*n).freq = (*left).freq + (*right).freq;
+		(*n).left = left;
+		(*n).right = right;
+		/* printf("BEFORE. parent: %d, left: %d, right: %d\n",n.freq,(*n.left).freq,(*n.right).freq); */
+		insert(pq, n);
+		printf("AFTER. parent: %d, left: %d, right: %d\n",(*n).freq,(*(*n).left).freq,(*(*n).right).freq);
 	}
-	return delMax(pq);
+	delMax(pq, root);
 }
 
-int build_code(char** codes, struct Node* parent, char* s){
-	struct Node* left = (*parent).left;
-	struct Node* right = (*parent).right;
-	if( (*left).data != 0 && (*right).data != 0 ){
+int build_code(char** codes, struct Node* parent, char s[]){
+	if( (*parent).left != NULL && (*parent).right != NULL ){
 		char right_buffer[80];
 		char left_buffer[80];
 		strcpy(left_buffer, s);
 		strcpy(right_buffer, s);
-		strcat(right_buffer,"1");
 		strcat(left_buffer,"0");
-		build_code(codes, left, left_buffer);
-		build_code(codes, right, right_buffer);
+		strcat(right_buffer,"1");
+		printf("%d\n",(*(*parent).right).freq);
+		printf("Going Left\n");
+		build_code(codes, (*parent).left, left_buffer);
+		printf("Going right\n");
+		build_code(codes, (*parent).right, right_buffer);
 	}
 	else{
 		codes[(*parent).data] = s;
+	}
+}
+
+void rec_traverse(struct Node* parent, int i){
+	if( (*parent).left != NULL && (*parent).right != NULL && i < 10 ){
+		printf("%d\n", (*parent).freq );
+		rec_traverse((*parent).right, i);
+		i++;
+	}
+	else{
+		printf("Done!\n");
 	}
 }
 
@@ -66,9 +85,13 @@ int compress(char* buffer, int size){
 	while( i < size )
 		freq[(int)buffer[i++]] += 1;
 	display(freq);
-	struct Node* root = build_trie(&pq, freq);
+	struct Node root, a;
+	build_trie(&pq, freq, &root);
+	a = *root.right;
+	printf("END. parent: %d, left: %d, right: %d\n",a.freq,(*a.left).freq,(*a.right).freq);
 	char* codes[FREQ_SIZE];
-	build_code(codes, root, "");
+	build_code(codes, &root, "");
+	printf("%s\n",codes['b']);
 }
 
 void test(){
@@ -77,9 +100,22 @@ void test(){
 	heap_t heap;
 	heap.h = ALLOC_HEAP(10);
 	heap.N = 0;
-	struct Node n1;
-	n1.data = array[0];
-	insert(&heap, &n1);
+	struct Node a, b;
+	struct Node n;
+	struct Node new_node;
+	n.data = array[0];
+	n.freq = 159;
+	a.data = array[1];
+	a.freq = 162;
+	b.data = array[2];
+	b.freq = 132;
+	n.left = &a;
+	n.right = &b;
+	swap(n.left, n.right);
+	printf("BEFORE. parent: %d, left: %d, right: %d\n",n.freq,(*n.left).freq,(*n.right).freq);
+	insert(&heap, &n);
+	delMax(&heap, &new_node);
+	printf("AFTER. parent: %d, left: %d, right: %d\n",new_node.freq,(*new_node.left).freq,(*new_node.right).freq);
 	print_heap(&heap);
 	free(heap.h);
 }

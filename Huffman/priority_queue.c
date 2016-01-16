@@ -23,36 +23,30 @@ struct Node* child(struct Node* root, struct Node* parent){
 }
 
 int insert(heap_t* pq, struct Node* n){
-	(*pq).h[(*pq).N++] = *n;
+	struct Node* ptr = (*pq).h + (*pq).N;
+	*ptr = *n;
+	/* printf("Has right: %d, left: %d\n",(*(*ptr).right).freq, (*(*ptr).left).freq); */
+	(*pq).N++;
 	swim( (*pq).h, &((*pq).h[(*pq).N-1]) ); /* The Nth element */
-	/* print_heap(pq); */
 }
 
-/* int insert_new_node(heap_t* pq, char d, int f, struct Node* n){
-	struct Node* temp;
-	(*temp).data = d;
-	(*temp).freq = f;
-	(*temp).next = n;
-	insert(pq, temp);
-} */
-
-struct Node* delMax(heap_t* pq){
+int delMax(heap_t* pq, struct Node* n){
 	if( (*pq).N == 0 ){ fprintf(stderr,"Failed to delete max from heap.\nThe heap is empty."); exit(1); }
 	struct Node* start = (*pq).h;
 	struct Node* end = &((*pq).h[--((*pq).N)]);
 	swap( start, end );
-	struct Node* max = end;
-	sink(start, end);
+	*n = *end;
+	sink(start, end - 1);
 	/* *end = NULL; I wish I could do this. */
 	/* Maybe do a resizing */
 	/* assert assert_heap() */
-	return max;
+	return 0;
 }
 
 /* Healper functions  */
 int swim(struct Node* start, struct Node* child){
 	struct Node* parent = parent_p(start, child);
-	while( child > start && (*parent).data < (*child).data ){
+	while( child > start && (*parent).freq < (*child).freq ){
 		swap(child, parent);
 		child = parent;
 		parent = parent_p(start, child);
@@ -61,10 +55,10 @@ int swim(struct Node* start, struct Node* child){
 
 int sink(struct Node* root, struct Node* end){
 	struct Node* parent = root;
-	struct Node* left_child = child(parent, parent);
-	while( left_child + 1 < end ){
-		if( left_child < end && (*left_child).data < (*(left_child+1)).data ) left_child++;
-		if( (*parent).data > (*left_child).data ) break;
+	struct Node* left_child = child(root, parent);
+	while( left_child  <= end ){
+		if( left_child < end && (*left_child).freq < (*(left_child+1)).freq ) left_child++;
+		if( (*parent).freq > (*left_child).freq ) break;
 		swap(parent, left_child);
 		parent = left_child;
 		left_child = child(root, parent);
@@ -73,9 +67,10 @@ int sink(struct Node* root, struct Node* end){
 
 void print_heap(heap_t* heap){
 	int i = 0;
+	if( (*heap).N == 0 ) printf("Heap is Empty.\n");
 	struct Node* temp = (*heap).h;
 	while( i < (*heap).N )
-		printf("'%d' ",temp[i++].data);
+		printf("'%d' ",temp[i++].freq);
 	printf("\n");
 }
 
