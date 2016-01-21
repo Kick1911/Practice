@@ -30,8 +30,8 @@ int insert(heap_t* pq, struct Node* n){
 	swim( (*pq).h, &((*pq).h[(*pq).N-1]) ); /* The Nth element */
 }
 
-int delMax(heap_t* pq, struct Node* n){
-	if( (*pq).N == 0 ){ fprintf(stderr,"Failed to delete max from heap.\nThe heap is empty."); exit(1); }
+int delMin(heap_t* pq, struct Node* n){
+	if( (*pq).N == 0 ){ fprintf(stderr,"Failed to delete min from heap.\nThe heap is empty."); exit(1); }
 	struct Node* start = (*pq).h;
 	struct Node* end = &((*pq).h[--((*pq).N)]);
 	swap( start, end );
@@ -46,7 +46,7 @@ int delMax(heap_t* pq, struct Node* n){
 /* Healper functions  */
 int swim(struct Node* start, struct Node* child){
 	struct Node* parent = parent_p(start, child);
-	while( child > start && (*parent).freq < (*child).freq ){
+	while( child > start && (*parent).freq > (*child).freq ){
 		swap(child, parent);
 		child = parent;
 		parent = parent_p(start, child);
@@ -57,8 +57,8 @@ int sink(struct Node* root, struct Node* end){
 	struct Node* parent = root;
 	struct Node* left_child = child(root, parent);
 	while( left_child  <= end ){
-		if( left_child < end && (*left_child).freq < (*(left_child+1)).freq ) left_child++;
-		if( (*parent).freq > (*left_child).freq ) break;
+		if( left_child < end && (*left_child).freq > (*(left_child+1)).freq ) left_child++;
+		if( (*parent).freq < (*left_child).freq ) break;
 		swap(parent, left_child);
 		parent = left_child;
 		left_child = child(root, parent);

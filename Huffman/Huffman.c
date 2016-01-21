@@ -36,8 +36,8 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 		left = (node*) malloc(sizeof(node*));
 		n = (node*) malloc(sizeof(node*));
 		printf("%x, %x\n", left, right);
-		delMax(pq, right);
-		delMax(pq, left);
+		delMin(pq, right);
+		delMin(pq, left);
 		(*n).data = '\0';
 		(*n).freq = (*left).freq + (*right).freq;
 		(*n).left = left;
@@ -46,36 +46,72 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 		insert(pq, n);
 		printf("AFTER. parent: %d, left: %d, right: %d\n",(*n).freq,(*(*n).left).freq,(*(*n).right).freq);
 	}
-	delMax(pq, root);
+	delMin(pq, root);
 }
 
-int build_code(char** codes, struct Node* parent, char s[]){
-	if( (*parent).left != NULL && (*parent).right != NULL ){
-		char right_buffer[80];
-		char left_buffer[80];
-		strcpy(left_buffer, s);
-		strcpy(right_buffer, s);
-		strcat(left_buffer,"0");
-		strcat(right_buffer,"1");
-		printf("%d\n",(*(*parent).right).freq);
-		printf("Going Left\n");
-		build_code(codes, (*parent).left, left_buffer);
-		printf("Going right\n");
-		build_code(codes, (*parent).right, right_buffer);
-	}
-	else{
-		codes[(*parent).data] = s;
-	}
-}
+int construct_block(char* code, size_t len, unsigned short* bin_p){
+	unsigned short bin = *bin_p;
+	int limit = 1 << (sizeof(unsigned short) * 8), i = 0;
 
-void rec_traverse(struct Node* parent, int i){
-	if( (*parent).left != NULL && (*parent).right != NULL && i < 10 ){
-		printf("%d\n", (*parent).freq );
-		rec_traverse((*parent).right, i);
+	while( i < len && bin << 1 < limit){
+		if( code[i] == '1' ){
+			bin <<= 1;
+			bin++;
+		}
+		else if( code[i] == '0' ){
+			bin <<= 1;
+		}
+		else{
+			fprintf(stderr,"Corrupt code\n");
+			exit(2);
+		}
 		i++;
 	}
+
+	*bin_p = bin;
+	if( bin << 1 >= limit ){
+		return 0;
+	}
+	return 1;
+}
+
+int output_bin(FILE* fp, char** codes, char* text){
+	unsigned short bin, result;
+	/* printf("char: %c, code: %s = bin: ",*text, codes[*text]);
+	result = construct_block(codes[*text], strlen(codes[*text]), &bin);
+	printf("%d, returned: %d\n",bin, result);
+	bin = ( !result )?0:bin;
+	text++;
+	printf("char: %c, code: %s = bin: ",*text, codes[*text]);
+	result = construct_block(codes[*text], strlen(codes[*text]), &bin);
+	printf("%d, returned: %d\n",bin, result); */
+	while( *text ){
+		if( construct_block(codes[*text], strlen(codes[*text]), &bin) ){
+			fwrite(&bin, sizeof(bin), sizeof(bin), fp);
+			bin = 0;
+		}
+		text++;
+	}
+}
+
+int build_code(char** codes, struct Node* parent,char* str){
+	if( (*parent).left != NULL && (*parent).right != NULL ){
+		char* left = malloc(sizeof(char) * 40);
+		char* right = malloc(sizeof(char) * 40);
+		strcpy(left, str);
+		strcpy(right, str);
+		left[strlen(str)] = '0';
+		right[strlen(str)] = '1';
+		left[strlen(str)+1] = '\0';
+		right[strlen(str)+1] = '\0';
+		printf("Going Left\n");
+		build_code(codes, (*parent).left, left);
+		printf("Going right\n");
+		build_code(codes, (*parent).right, right);
+	}
 	else{
-		printf("Done!\n");
+		codes[(*parent).data] = str;
+		printf("%c: %s, %x\n",(*parent).data, codes[(*parent).data], codes + (*parent).data);
 	}
 }
 
@@ -87,11 +123,19 @@ int compress(char* buffer, int size){
 	display(freq);
 	struct Node root, a;
 	build_trie(&pq, freq, &root);
-	a = *root.right;
-	printf("END. parent: %d, left: %d, right: %d\n",a.freq,(*a.left).freq,(*a.right).freq);
+
 	char* codes[FREQ_SIZE];
 	build_code(codes, &root, "");
-	printf("%s\n",codes['b']);
+
+	a = *root.right;
+	printf("END. parent: %d, left: %d, right: %d\n",a.freq,(*a.left).freq,(*a.right).freq);
+	printf("*** %s\n",*(codes + 'a'));
+
+	FILE* fp = fopen("compressed.huff","wb");
+	output_bin(fp, codes, buffer);
+	free(pq.h);
+	fclose(fp);
+	return 0;
 }
 
 void test(){
@@ -114,7 +158,7 @@ void test(){
 	swap(n.left, n.right);
 	printf("BEFORE. parent: %d, left: %d, right: %d\n",n.freq,(*n.left).freq,(*n.right).freq);
 	insert(&heap, &n);
-	delMax(&heap, &new_node);
+	delMin(&heap, &new_node);
 	printf("AFTER. parent: %d, left: %d, right: %d\n",new_node.freq,(*new_node.left).freq,(*new_node.right).freq);
 	print_heap(&heap);
 	free(heap.h);
