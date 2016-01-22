@@ -86,7 +86,7 @@ int output_bin(FILE* fp, char** codes, char* text){
 	result = construct_block(codes[*text], strlen(codes[*text]), &bin);
 	printf("%d, returned: %d\n",bin, result); */
 	while( *text ){
-		if( construct_block(codes[*text], strlen(codes[*text]), &bin) ){
+		if( !construct_block(codes[*text], strlen(codes[*text]), &bin) ){
 			fwrite(&bin, sizeof(bin), sizeof(bin), fp);
 			bin = 0;
 		}
