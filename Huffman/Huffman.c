@@ -129,7 +129,6 @@ int compress(char* buffer, int size){
 
 	a = *root.right;
 	printf("END. parent: %d, left: %d, right: %d\n",a.freq,(*a.left).freq,(*a.right).freq);
-	printf("*** %s\n",*(codes + 'a'));
 
 	FILE* fp = fopen("compressed.huff","wb");
 	output_bin(fp, codes, buffer);
