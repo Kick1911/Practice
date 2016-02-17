@@ -23,12 +23,11 @@ void display(int* array){
 int main(int argc, char** argv){
 	int rank, processors;
 	const int root = 0;
-	size_t compute_size = 1 << 12, size = 1 << 15;
+	size_t compute_size = 1 << 10, size = 1 << 11;
 
 	int* a = malloc(sizeof(int) * size);
 	int* b = malloc(sizeof(int) * size);
 	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &processors);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	if( rank == root ){
@@ -43,11 +42,11 @@ int main(int argc, char** argv){
 
 	MPI_Bcast(a, size, MPI_INT, root, MPI_COMM_WORLD);
 	MPI_Bcast(b, size, MPI_INT, root, MPI_COMM_WORLD);
+	
 	vectoradd(a + (compute_size*rank), b + (compute_size*rank), compute_size - 1);
 
 	if( rank == root ){
-		printf("%d\n",a[0]);
-		printf("%d\n",a[size-1]);
+		display(a);
 	}
 
 	free(a);free(b);
