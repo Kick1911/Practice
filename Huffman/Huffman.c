@@ -32,9 +32,9 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 
 	node* left,* right,* n;
 	while( (*pq).N > 1 ){
-		right = (node*) malloc(sizeof(node*));
-		left = (node*) malloc(sizeof(node*));
-		n = (node*) malloc(sizeof(node*));
+		right = (node*) malloc(sizeof(node));
+		left = (node*) malloc(sizeof(node));
+		n = (node*) malloc(sizeof(node));
 		printf("%x, %x\n", left, right);
 		delMin(pq, right);
 		delMin(pq, left);
@@ -85,9 +85,11 @@ int output_bin(FILE* fp, char** codes, char* text){
 	printf("char: %c, code: %s = bin: ",*text, codes[*text]);
 	result = construct_block(codes[*text], strlen(codes[*text]), &bin);
 	printf("%d, returned: %d\n",bin, result); */
+	fwrite(codes, sizeof(char*), FREQ_SIZE, fp);
+	printf("CODE FOR b %s\n",codes['b']);
 	while( *text ){
 		if( !construct_block(codes[*text], strlen(codes[*text]), &bin) ){
-			fwrite(&bin, sizeof(bin), sizeof(bin), fp);
+			fwrite(&bin, sizeof(bin), 1, fp);
 			bin = 0;
 		}
 		text++;
@@ -132,8 +134,8 @@ int compress(char* buffer, int size){
 
 	FILE* fp = fopen("compressed.huff","wb");
 	output_bin(fp, codes, buffer);
-	free(pq.h);
 	fclose(fp);
+	free(pq.h);
 	return 0;
 }
 

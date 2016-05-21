@@ -1,10 +1,11 @@
 /* priority_queue.h */
+#ifndef HEAP_H
+#define HEAP_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <node.h>
 
-#ifndef HEAP_H
-#define HEAP_H
 
 #define ALLOC_HEAP(X) ((struct Node*)malloc(sizeof(int) * X))
 
