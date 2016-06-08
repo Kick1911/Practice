@@ -1,2 +1,2 @@
 sieve: sieve.c sieve.h
-	mpicc -ansi -lm -I. sieve.c -o sieve
+	mpicc -ansi -O3 -lm -I. sieve.c -o sieve
