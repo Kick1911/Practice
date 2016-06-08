@@ -57,7 +57,9 @@ int main(int argc,char** argv){
 		exit(1);
 	}
 
+	i = 0;
 	while( i < size ) marked[i++] = 0;
+
 	if(!rank) index = 0;
 	prime = 2;
 	do{
@@ -80,7 +82,6 @@ int main(int argc,char** argv){
 	}while( prime * prime <= n);
 	count = 0;
 	i = 0;
-	printf("WTF\n");
 	while( i < size )
 		if(!marked[i++]) count++;
 	MPI_Reduce(&count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
