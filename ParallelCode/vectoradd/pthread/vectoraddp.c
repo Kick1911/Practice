@@ -2,28 +2,55 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-typedef struct message{
-	char* msg;
-	int msg_num;
-}message_t;
+typedef struct array_pair{
+	int* array1;
+	int* array2;
+	int length;
+}array_pair_t;
 
-void* print_message_function(void* ptr){
-	message_t* msg= (message_t*)ptr;
-	printf("%s: %d\n",msg->msg,msg->msg_num);
-}
+void* vectoradd_pthread(void* ptr){
+	int* ptr1;
+	int* ptr2;
+	pthread_t thread;
+	array_pair_t* array_pair_1 = (array_pair_t*)ptr;
+	int i, fraction = array_pair_1->length / 2;
+	if( array_pair_1->length <= 2 )
+		return NULL;
+	array_pair_1->length -= fraction;
+	ptr1 = array_pair_1->array1;
+	ptr2 = array_pair_1->array2;
+	array_pair_1->array1 += array_pair_1->length;
+	array_pair_1->array2 += array_pair_1->length;
 
-int main(int argc, char** argv){
-
-	pthread_t thread1, thread2;
-	message_t msg1 = {"Thread 1",1};
-	message_t msg2 = {"Thread 2",2};
-
-	int result = pthread_create(&thread1, NULL, print_message_function, (void*) &msg1);
+	int result = pthread_create(&thread, NULL, vectoradd_pthread, (void*) ptr);
 	if( result ){
 		fprintf(stderr,"Error - pthread_create() return code: %d\n", result);
 		exit(EXIT_FAILURE);
 	}
-	pthread_join(thread1, NULL);
 
+	i = 0;
+	while( i < array_pair_1->length ){
+		ptr1[i] += ptr2[i];
+		i++;
+	}
+
+	pthread_join(thread, NULL);
+
+}
+
+int vectoradd(int* array1, int* array2, int length){
+	array_pair_t array_pair_1 = {array1, array2, length};
+	vectoradd_pthread((void*) &array_pair_1);
+}
+
+int main(int argc, char** argv){
+	int array1[9] = {1,2,3,4,5,10,546,15,819};
+	int array2[9] = {7,8,9,45,65,20,81,59,4};
+	vectoradd(array1, array2, 10);
+	int* ptr = array1;
+	int* end = array1 + 9;
+	while( ptr < end )
+		printf("%d ",*ptr++);
+	printf("\n");
 	return 0;
 }
