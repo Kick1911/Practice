@@ -77,23 +77,21 @@ int construct_block(char* code, size_t len, unsigned short* bin_p){
 
 int output_bin(FILE* fp, char** codes, char* text){
 	unsigned short bin, result;
-	/* printf("char: %c, code: %s = bin: ",*text, codes[*text]);
-	result = construct_block(codes[*text], strlen(codes[*text]), &bin);
-	printf("%d, returned: %d\n",bin, result);
-	bin = ( !result )?0:bin;
-	text++;
-	printf("char: %c, code: %s = bin: ",*text, codes[*text]);
-	result = construct_block(codes[*text], strlen(codes[*text]), &bin);
-	printf("%d, returned: %d\n",bin, result); */
-	fwrite(codes, sizeof(char*), FREQ_SIZE, fp);
+	int i = 0;
+	while( i < FREQ_SIZE ){
+		fwrite(codes[i], sizeof(char), strlen(codes[i]), fp);
+		i++;
+	}
 	printf("CODE FOR b %s\n",codes['b']);
 	while( *text ){
+		printf("%c",*text);
 		if( !construct_block(codes[*text], strlen(codes[*text]), &bin) ){
 			fwrite(&bin, sizeof(bin), 1, fp);
 			bin = 0;
 		}
 		text++;
 	}
+	printf("\n");
 }
 
 int build_code(char** codes, struct Node* parent,char* str){
@@ -127,6 +125,9 @@ int compress(char* buffer, int size){
 	build_trie(&pq, freq, &root);
 
 	char* codes[FREQ_SIZE];
+	i = 0;
+	while( i < FREQ_SIZE )
+		codes[i++] = "";
 	build_code(codes, &root, "");
 
 	a = *root.right;
