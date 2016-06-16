@@ -51,9 +51,10 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 
 int construct_block(char* code, size_t len, unsigned short* bin_p){
 	unsigned short bin = *bin_p;
-	int limit = 1 << (sizeof(unsigned short) * 8), i = 0;
+	int limit = 1 << (sizeof(unsigned short) * 8);
 
-	while( i < len && bin << 1 < limit){
+	int i = 0;
+	while( i < len && (bin << 1) < limit){
 		if( code[i] == '1' ){
 			bin <<= 1;
 			bin++;
@@ -75,8 +76,8 @@ int construct_block(char* code, size_t len, unsigned short* bin_p){
 	return 1;
 }
 
-int output_bin(FILE* fp, char** codes, char* text){
-	unsigned short bin, result;
+int output_bin(FILE* fp, char** codes, char* text, size_t size){
+	unsigned short bin = 0, result;
 	int i = 0;
 	while( i < FREQ_SIZE ){
 		fwrite(codes[i], sizeof(char), strlen(codes[i]), fp);
@@ -84,14 +85,12 @@ int output_bin(FILE* fp, char** codes, char* text){
 	}
 	printf("CODE FOR b %s\n",codes['b']);
 	while( *text ){
-		printf("%c",*text);
 		if( !construct_block(codes[*text], strlen(codes[*text]), &bin) ){
 			fwrite(&bin, sizeof(bin), 1, fp);
 			bin = 0;
 		}
 		text++;
 	}
-	printf("\n");
 }
 
 int build_code(char** codes, struct Node* parent,char* str){
@@ -115,7 +114,7 @@ int build_code(char** codes, struct Node* parent,char* str){
 	}
 }
 
-int compress(char* buffer, int size){
+int compress(char* buffer, size_t size){
 	int i = 0;
 	heap_t pq;
 	while( i < size )
@@ -134,7 +133,7 @@ int compress(char* buffer, int size){
 	printf("END. parent: %d, left: %d, right: %d\n",a.freq,(*a.left).freq,(*a.right).freq);
 
 	FILE* fp = fopen("compressed.huff","wb");
-	output_bin(fp, codes, buffer);
+	output_bin(fp, codes, buffer, size);
 	fclose(fp);
 	free(pq.h);
 	return 0;
@@ -182,7 +181,7 @@ int main(int argc, char** argv){
 	if( buffer == NULL ){ fprintf(stderr,"Memory allocation failed.\n"); exit(1);}
 	result = fread(buffer,1,l_size,pfile);
 	if( result != l_size ){ fprintf(stderr,"Error reading in file.\n"); exit(1);}
-	buffer[l_size] == '\0';
+	buffer[l_size - 1] = '\0';
 	printf("Done :D\n");
 
 	compress(buffer, l_size);
