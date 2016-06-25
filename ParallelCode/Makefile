@@ -7,6 +7,6 @@ temp: template.c
 qsort: quicksort.c
 	gcc -ansi quicksort.c -o qsort
 clean:
-	rm temp fork
+	rm -f temp fork
 	cd sieve && $(MAKE) clean
 	cd vectoradd && $(MAKE) clean

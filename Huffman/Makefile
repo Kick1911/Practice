@@ -14,4 +14,4 @@ priority_queue.o:  priority_queue.c
 test: test.c
 	gcc $(CFLAG) test.c -Llib -lhuff $(INCLUDE) -o test
 clean:
-	rm compressed.huff huff test a.out $(LIB)/*
+	rm -f compressed.huff huff test a.out $(LIB)/*
