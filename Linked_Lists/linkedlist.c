@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <linkedlist.h>
 
-static int append(linked_list_t* list, char data){
+int append(linked_list_t* list, char data){
 	node_t* temp;
 	if( !(temp = malloc(sizeof(node_t))) )
 		return 2;
@@ -48,7 +48,7 @@ static int remove_data(linked_list_t* list, char data){
 	}
 }
 
-int main(void){
+/* int main(void){
 	linked_list_t list;
 	LINKED_LIST_INIT(list);
 	printf("sizeof list %d\n",sizeof(list));
@@ -64,6 +64,6 @@ int main(void){
 	printf("DATA of end: %c\n",list.end->data);
 	display_linked_list(&list);
 	return 0;
-}
+} */
 
 #endif

@@ -50,8 +50,7 @@ int* build_suffix_array(int* suffix_array, char* txt, int n){
 		int prev_rank_0 = suffixes[0].rank[0];
 		suffixes[0].rank[0] = rank;
 		ind[suffixes[0].index] = 0;
-		i = 1;
-		while( i < n ){
+		i = 1; while( i < n ){
 			if( suffixes[i].rank[0] == prev_rank_0 && suffixes[i].rank[1] == suffixes[i - 1].rank[1] ){
 				prev_rank_0 = suffixes[i].rank[0];
 				suffixes[i].rank[0] = rank;

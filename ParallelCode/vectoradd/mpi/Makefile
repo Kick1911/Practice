@@ -1,4 +1,4 @@
-vectoraddmpi: vectoraddmpi.c vectoradd.h
-	mpicc -ansi -O3 -I. vectoraddmpi.c -o vectoraddmpi
+vectoradd: vectoradd.c
+	mpicc -fopenmp -O3 -ansi vectoradd.c -o vectoradd
 clean:
-	rm -f vectoraddmpi
+	rm -f vectoradd

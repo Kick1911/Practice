@@ -14,6 +14,10 @@ typedef struct linked_list{
 	struct node* end;
 }linked_list_t;
 
+static __inline__ node_t* head(linked_list_t* l){
+	return l->head;
+}
+
 static __inline__ void display_linked_list(linked_list_t* list){
 	node_t* start = list->head;
 	node_t* end = list->end;
@@ -24,6 +28,6 @@ static __inline__ void display_linked_list(linked_list_t* list){
 	printf("\n");
 }
 
-static int append(linked_list_t*,char);
+int append(linked_list_t*,char);
 
 #endif
