@@ -1,21 +1,7 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <suffix_array.h>
 
-#define MAXLG 65536
-#define MAXN 17
-
-typedef struct suffix{
-	int index;
-	int rank[2];
-}suffix_t;
-
-void display_suffixes(suffix_t* ptr, int len){
-	int i = 0; while( i < len ){
-		printf("i:%d index:%d rank0:%d rank1:%d\n", i, ptr[i].index, ptr[i].rank[0], ptr[i].rank[1]);
-		i++;
-	}
-}
 
 int cmp(const void* ptr_a, const void* ptr_b){
 	suffix_t a = *((suffix_t*)ptr_a);
@@ -23,7 +9,7 @@ int cmp(const void* ptr_a, const void* ptr_b){
 	return (a.rank[0] == b.rank[0])? (a.rank[1] < b.rank[1]) ? 0:1 :(a.rank[0] < b.rank[0]) ? 0:1;
 }
 
-int* build_suffix_array(int* suffix_array, char* txt, int n){
+int build_suffix_array(int* suffix_array, char* txt, int n){
 	int i=0, k;
 	suffix_t suffixes[n];
 	while( i + 1 < n ){
@@ -37,10 +23,7 @@ int* build_suffix_array(int* suffix_array, char* txt, int n){
 	suffixes[i].rank[0] = txt[i] - 'a';
 	suffixes[i].rank[1] = -1;
 
-	display_suffixes(suffixes, n);
 	qsort(suffixes, n, sizeof(suffix_t), cmp);
-	printf("After sort\n");
-	display_suffixes(suffixes, n);
 
 	int ind[n];
 
@@ -74,9 +57,10 @@ int* build_suffix_array(int* suffix_array, char* txt, int n){
 		suffix_array[i] = suffixes[i].index;
 		i++;
 	}
+	return 0;
 }
 
-int main(void){
+/* int main(void){
 	int result, len, i;
 	char buf[100];
 	result = scanf("%s",buf);
@@ -89,4 +73,4 @@ int main(void){
 		printf("%d ",suffix_array[i++]);
 	printf("\n");
 	return 0;
-}
+} */
