@@ -29,19 +29,21 @@ int lcp(int* arr, char* str, int len){
 	i = 0;while( i < len ){
 		l = 0;
 		k = inv_suffix[i];
-		j = suffix_array[mod((k-1), len)];
-		while( str[i + l] == str[j + l] ) l++;
-		arr[mod((k-1), len)] = l;
+		j = suffix_array[(k + 1) % len];
+		while( i + l < len && j + l < len && str[i + l] == str[j + l] ) l++;
+		arr[k] = l;
 		i++;
 	}
 	return 0;
 }
 
-int main(void){
+int main(int argc, char** argv){
 	int i;
-	char* str = "banana";
+	if( argc < 2 ) exit(1);
+	char* str = argv[1];
 	int lcp_array[strlen(str)];
 	lcp(lcp_array, str, strlen(str));
+
 	i = 0;while( i < strlen(str)){
 		printf("%d ", lcp_array[i]);
 		i++;
