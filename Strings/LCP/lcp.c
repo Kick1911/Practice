@@ -5,7 +5,14 @@
 #include <math.h>
 
 __inline__ int mod(int a, int b){
-	return a - b * (a/b);
+	int d = a/b;
+	if( d < 1 ){
+		int temp = b * d;
+		return (b + (a - temp)) % b;
+	}else{
+		b *= d;
+		return a - b;
+	}
 }
 
 int lcp(int* arr, char* str, int len){
@@ -18,6 +25,7 @@ int lcp(int* arr, char* str, int len){
 		inv_suffix[suffix_array[i]] = i;
 		i++;
 	}
+
 	i = 0;while( i < len ){
 		l = 0;
 		k = inv_suffix[i];
@@ -30,8 +38,18 @@ int lcp(int* arr, char* str, int len){
 }
 
 int main(void){
+	int i;
 	char* str = "banana";
 	int lcp_array[strlen(str)];
 	lcp(lcp_array, str, strlen(str));
+	i = 0;while( i < strlen(str)){
+		printf("%d ", lcp_array[i]);
+		i++;
+	}
+	printf("\n");
+	/* i = -20;while( i < 20 ){
+		printf("%d : %d\n", i, mod(i,4));
+		i++;
+	} */
 	return 0;
 }

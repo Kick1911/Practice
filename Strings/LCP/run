@@ -1,3 +1,4 @@
 #!/bin/zsh
 export LD_LIBRARY_PATH=../lib
+make
 ./lcp
