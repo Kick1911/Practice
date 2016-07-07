@@ -4,7 +4,7 @@ suffix_array: suffix_array.c
 library: suffix_array.o
 	gcc -ansi -shared -o ../lib/libstring.so.1 suffix_array.o
 	cd ../lib && ln -s libstring.so.1 libstring.so
-	cd ../SUffix_Array && rm -f suffix_array.o
+	cd ../Suffix_Array && rm -f suffix_array.o
 suffix_array.o: suffix_array.c
 	gcc -ansi -fPIC -c -Wall -I$(INCLUDE_PATH) suffix_array.c
 clean:

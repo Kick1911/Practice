@@ -103,6 +103,10 @@ vector<int> kasai(string txt, vector<int> suffixArr, int n){
     // invSuff[5] would store 0.  This is used to get next
     // suffix string from suffix array.
     vector<int> invSuff(n, 0);
+
+	/* for (int i=0; i < n; i++)
+		cout << suffixArr[i] << " ";
+ 	cout << endl; */
  
     // Fill values in invSuff[]
     for (int i=0; i < n; i++)

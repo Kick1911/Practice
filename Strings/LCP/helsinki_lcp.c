@@ -17,23 +17,26 @@ __inline__ int mod(int a, int b){
 
 int lcp(int* arr, char* str, int len){
 	int i, l, k, j;
-	int suffix_array[len];
-	int inv_suffix[len];
-	build_suffix_array(suffix_array, str, len);
-	i = 0; while( i < len ) printf("%d ",suffix_array[i++]);
+	int suffix_array[len + 1];
+	int inv_suffix[len + 1];
+	build_suffix_array(suffix_array + 1, str, len + 1);
+	i = 1; while( i <= len ) printf("%d ",suffix_array[i++]);
 	printf("\n");
 
-	i = 0;while( i < len ){
+	i = 1;while( i <= len ){
 		inv_suffix[suffix_array[i]] = i;
 		i++;
 	}
 
-	i = 0;while( i < len ){
-		l = 0;
+	l = 0;
+	i = 1;while( i <= len ){
 		k = inv_suffix[i];
-		j = suffix_array[(k + 1) % len];
-		while( i + l < len && j + l < len && str[i + l] == str[j + l] ) l++;
-		arr[k] = l;
+		if( k > 1 ){
+			j = suffix_array[k - 1];
+			while( str[i + l] == str[j + l] ) l++;
+			arr[k] = l;
+			if( l > 0 ) l--;
+		}
 		i++;
 	}
 	return 0;
