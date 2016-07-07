@@ -2,4 +2,4 @@
 make clean && \
 git add -A && \
 git commit -m "$1"
-return $? && git push
+git push
