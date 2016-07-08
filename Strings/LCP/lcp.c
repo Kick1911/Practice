@@ -31,7 +31,7 @@ int lcp(int* arr, char* str, int len){
 	i = 0;while( i < len ){
 		l = 0;
 		k = inv_suffix[i];
-		j = suffix_array[(k + 1) % len];
+		j = suffix_array[k - 1];
 		while( i + l < len && j + l < len && str[i + l] == str[j + l] ) l++;
 		arr[k] = l;
 		i++;
