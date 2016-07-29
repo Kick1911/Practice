@@ -3,4 +3,5 @@ clean:
 	cd Huffman && $(MAKE) clean
 	cd Linked_Lists && $(MAKE) clean
 	cd ParallelCode && $(MAKE) clean
+	cd Modulo && $(MAKE) clean
 	cd Strings && $(MAKE) clean

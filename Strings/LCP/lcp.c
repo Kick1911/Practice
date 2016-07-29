@@ -6,13 +6,12 @@
 
 __inline__ int mod(int a, int b){
 	int d = a/b;
-	if( d < 1 ){
-		int temp = b * d;
-		return (b + (a - temp)) % b;
-	}else{
-		b *= d;
-		return a - b;
-	}
+	
+	printf("count\n");
+	if( d < 1 )
+		return mod(b + (a - b * d), b);
+	else
+		return a - b * d;
 }
 
 int lcp(int* arr, char* str, int len){
@@ -51,9 +50,5 @@ int main(int argc, char** argv){
 		i++;
 	}
 	printf("\n");
-	/* i = -20;while( i < 20 ){
-		printf("%d : %d\n", i, mod(i,4));
-		i++;
-	} */
 	return 0;
 }

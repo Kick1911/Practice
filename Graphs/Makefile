@@ -1,4 +1,4 @@
 dfs: dfs.c
-	gcc -ansi dfs.c -o dfs
+	gcc -ansi -g dfs.c -o dfs
 clean:
 	rm -f dfs
