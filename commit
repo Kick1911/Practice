@@ -2,4 +2,8 @@
 make clean && \
 git add -A && \
 git commit -m "$1"
-git push
+if [ $? -eq 0 ] ; then
+	git push
+else
+	printf 'Commit Failed\n'
+fi
