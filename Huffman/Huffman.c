@@ -6,6 +6,12 @@
 
 int freq[FREQ_SIZE];
 
+typedef unsigned short ushort;
+typedef struct code{
+	char bits;
+	int code;
+}code_t;
+
 void display(int* array){
 	int i = 0;
 	while( i < FREQ_SIZE )
@@ -49,93 +55,87 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 	delMin(pq, root);
 }
 
-int construct_block(char* code, size_t len, unsigned short* bin_p){
-	unsigned short bin = *bin_p;
-	int limit = 1 << (sizeof(unsigned short) * 8);
+int construct_block(code_t c, ushort* bin_p){
+	ushort bin = *bin_p;
+	int limit = 1 << (sizeof(ushort) * 8);
 
-	int i = 0;
-	while( i < len && (bin << 1) < limit){
-		if( code[i] == '1' ){
+	int i = c.bits, int_code = c.code;
+	while( i >= 0 && (bin << 1) < limit){
+		if( (int_code >> i) ^ 0 ){   /* Equals 1 */
 			bin <<= 1;
 			bin++;
 		}
-		else if( code[i] == '0' ){
+		else if( (int_code >> i) ^ 1 ) /* Equals 0 */
 			bin <<= 1;
-		}
 		else{
 			fprintf(stderr,"Corrupt code\n");
 			exit(2);
 		}
-		i++;
+		i--;
 	}
 
 	*bin_p = bin;
-	if( bin << 1 >= limit ){
+	if( bin << 1 >= limit )
 		return 0;
-	}
 	return 1;
 }
 
-int output_bin(FILE* fp, char** codes, char* text, size_t size){
-	unsigned short bin = 0, result;
-	int i = 0;
-	while( i < FREQ_SIZE ){
-		fwrite(codes[i], sizeof(char), strlen(codes[i]), fp);
-		i++;
-	}
-	printf("CODE FOR b %s\n",codes['b']);
-	while( *text ){
-		if( !construct_block(codes[*text], strlen(codes[*text]), &bin) ){
+int output_bin(FILE* fp, code_t* codes, char* text, size_t size){
+	ushort bin = 0, result;
+	fwrite(codes, sizeof(code_t), FREQ_SIZE, fp);
+	while( *text )
+		if( !construct_block(codes[*text++], &bin) ){
 			fwrite(&bin, sizeof(bin), 1, fp);
 			bin = 0;
 		}
-		text++;
-	}
 }
 
-int build_code(char** codes, struct Node* parent,char* str){
-	if( (*parent).left != NULL && (*parent).right != NULL ){
-		char* left = malloc(sizeof(char) * 40);
-		char* right = malloc(sizeof(char) * 40);
-		strcpy(left, str);
-		strcpy(right, str);
-		left[strlen(str)] = '0';
-		right[strlen(str)] = '1';
-		left[strlen(str)+1] = '\0';
-		right[strlen(str)+1] = '\0';
+int build_code(code_t* codes, struct Node* parent,int int_code, int bits){
+	if( parent->left != NULL && parent->right != NULL ){
 		printf("Going Left\n");
-		build_code(codes, (*parent).left, left);
+		build_code(codes, parent->left, int_code << 1, bits + 1);
 		printf("Going right\n");
-		build_code(codes, (*parent).right, right);
+		build_code(codes, parent->right, (int_code << 1) + 1, bits + 1);
 	}
 	else{
-		codes[(*parent).data] = str;
-		printf("%c: %s, %x\n",(*parent).data, codes[(*parent).data], codes + (*parent).data);
+		code_t temp = {bits, int_code};
+		codes[parent->data] = temp;
+		printf("%c: %d-%d, %x\n",parent->data, codes[parent->data].code, bits, codes + parent->data);
 	}
 }
 
-int compress(char* buffer, size_t size){
+int compress(char* buffer, size_t l_size){
 	int i = 0;
 	heap_t pq;
-	while( i < size )
+	while( i < l_size )
 		freq[(int)buffer[i++]] += 1;
 	display(freq);
 	struct Node root, a;
 	build_trie(&pq, freq, &root);
 
-	char* codes[FREQ_SIZE];
-	i = 0;
-	while( i < FREQ_SIZE )
-		codes[i++] = "";
-	build_code(codes, &root, "");
+	code_t* c = (code_t*) malloc(sizeof(code_t) * FREQ_SIZE);
+	memset(c, 0, FREQ_SIZE);
+	build_code(c, &root, 0, 0);
 
 	a = *root.right;
 	printf("END. parent: %d, left: %d, right: %d\n",a.freq,(*a.left).freq,(*a.right).freq);
 
 	FILE* fp = fopen("compressed.huff","wb");
-	output_bin(fp, codes, buffer, size);
+	output_bin(fp, c, buffer, l_size);
 	fclose(fp);
 	free(pq.h);
+	return 0;
+}
+
+int decompress(FILE* fp, size_t l_size){
+	code_t* c = (code_t*) malloc(sizeof(code_t) * FREQ_SIZE);
+	fread(c, sizeof(code_t), FREQ_SIZE, fp);
+	size_t text_size = (l_size - ftell(fp))/2;
+	ushort bin_codes[text_size];
+	fread(bin_codes, sizeof(ushort), text_size, fp);
+	int i=0;while(i < sizeof(bin_codes)/sizeof(ushort))
+		printf("%d ",bin_codes[i++]);
+	printf("\n");
 	return 0;
 }
 
@@ -171,22 +171,26 @@ int main(int argc, char** argv){
 	char* buffer;
 	size_t result;
 
-	pfile = fopen(argv[1],"rb");
+	pfile = fopen(argv[2],"rb");
 	if( pfile == NULL ){ fprintf(stderr,"File not found.\n"); exit(1);}
-
 	fseek(pfile, 0, SEEK_END);
 	l_size = ftell(pfile);
 	rewind(pfile);
-	buffer = malloc(sizeof(char) * l_size);
-	if( buffer == NULL ){ fprintf(stderr,"Memory allocation failed.\n"); exit(1);}
-	result = fread(buffer,1,l_size,pfile);
-	if( result != l_size ){ fprintf(stderr,"Error reading in file.\n"); exit(1);}
-	buffer[l_size - 1] = '\0';
-	printf("Done :D\n");
 
-	compress(buffer, l_size);
 
-	free(buffer);
+	if( *argv[1] == 'd' )
+		decompress(pfile, l_size);
+	else{
+		buffer = malloc(sizeof(char) * l_size);
+		if( buffer == NULL ){ fprintf(stderr,"Memory allocation failed.\n"); exit(1);}
+		result = fread(buffer,1,l_size,pfile);
+		if( result != l_size ){ fprintf(stderr,"Error reading in file.\n"); exit(1);}
+		buffer[l_size - 1] = '\0';
+		printf("Done :D\n");
+		compress(buffer, l_size);
+		free(buffer);
+	}
+
 	fclose(pfile);
 	return 0;
 }
