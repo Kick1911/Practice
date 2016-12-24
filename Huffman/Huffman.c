@@ -1,5 +1,6 @@
 #include <priority_queue.h>
 #include <string.h>
+#include <hash_table.h>
 
 #define FREQ_SIZE (125)
 #define NUM_OF_CHAR (27)
@@ -21,8 +22,8 @@ void display(int* array){
 
 struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 	int i = 0;
-	(*pq).h = ALLOC_HEAP(FREQ_SIZE);
-	(*pq).N = 0;
+	pq->h = ALLOC_HEAP(FREQ_SIZE);
+	pq->N = 0;
 	struct Node top, temp;
 	while( i < FREQ_SIZE ){
 		if(array[i] != 0){
@@ -37,20 +38,20 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 	}
 
 	node* left,* right,* n;
-	while( (*pq).N > 1 ){
+	while( pq->N > 1 ){
 		right = (node*) malloc(sizeof(node));
 		left = (node*) malloc(sizeof(node));
 		n = (node*) malloc(sizeof(node));
 		printf("%x, %x\n", left, right);
 		delMin(pq, right);
 		delMin(pq, left);
-		(*n).data = '\0';
-		(*n).freq = (*left).freq + (*right).freq;
-		(*n).left = left;
-		(*n).right = right;
-		/* printf("BEFORE. parent: %d, left: %d, right: %d\n",n.freq,(*n.left).freq,(*n.right).freq); */
+		n->data = '\0';
+		n->freq = left->freq + right->freq;
+		n->left = left;
+		n->right = right;
+		/* printf("BEFORE. parent: %d, left: %d, right: %d\n",n.freq,n.left->freq,n.right->freq); */
 		insert(pq, n);
-		printf("AFTER. parent: %d, left: %d, right: %d\n",(*n).freq,(*(*n).left).freq,(*(*n).right).freq);
+		printf("AFTER. parent: %d, left: %d, right: %d\n",n->freq,(*n->left).freq,(*n->right).freq);
 	}
 	delMin(pq, root);
 }
@@ -67,10 +68,8 @@ int construct_block(code_t c, ushort* bin_p){
 		}
 		else if( (int_code >> i) ^ 1 ) /* Equals 0 */
 			bin <<= 1;
-		else{
-			fprintf(stderr,"Corrupt code\n");
-			exit(2);
-		}
+		else
+			fprintf(stderr,"Corrupt code\n"),exit(2);
 		i--;
 	}
 
@@ -82,7 +81,17 @@ int construct_block(code_t c, ushort* bin_p){
 
 int output_bin(FILE* fp, code_t* codes, char* text, size_t size){
 	ushort bin = 0, result;
-	fwrite(codes, sizeof(code_t), FREQ_SIZE, fp);
+	u_int i;
+	h_table_t ht;
+	alloc_h_table(&ht, FREQ_SIZE);
+	i = 0;while( i < FREQ_SIZE ){
+		if( codes + i != NULL ){
+			u_int ratio = (u_int) (((double)codes[i].code / (double)codes[i].bits) * 1000);
+			insert_h(&ht, ratio, i);
+		}
+	}
+	fwrite(&ht.size, sizeof(u_int), 1, fp);
+	fwrite(ht.hash_table, sizeof(h_node_t), FREQ_SIZE, fp);
 	while( *text )
 		if( !construct_block(codes[*text++], &bin) ){
 			fwrite(&bin, sizeof(bin), 1, fp);
@@ -108,7 +117,7 @@ int compress(char* buffer, size_t l_size){
 	int i = 0;
 	heap_t pq;
 	while( i < l_size )
-		freq[(int)buffer[i++]] += 1;
+		freq[(int)buffer[i++]]++;
 	display(freq);
 	struct Node root, a;
 	build_trie(&pq, freq, &root);
@@ -133,9 +142,17 @@ int decompress(FILE* fp, size_t l_size){
 	size_t text_size = (l_size - ftell(fp))/2;
 	ushort bin_codes[text_size];
 	fread(bin_codes, sizeof(ushort), text_size, fp);
-	int i=0;while(i < sizeof(bin_codes)/sizeof(ushort))
-		printf("%d ",bin_codes[i++]);
-	printf("\n");
+	int i=0;while(i < sizeof(bin_codes)/sizeof(ushort)){
+		ushort temp = 0;
+		int j = 1 << (sizeof(ushort) * 8);
+		while( j >= 0 && temp ){
+			if(bin_codes[i] & 1 << j)
+				temp <<= 1, temp++;
+			else
+				temp <<= 1;
+		}
+		i++;
+	}
 	return 0;
 }
 

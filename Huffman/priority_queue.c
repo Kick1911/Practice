@@ -1,8 +1,8 @@
 /* priority_queue.c */
+#ifndef HEAP_C
+#define HEAP_C
 
 #include <priority_queue.h>
-
-#ifdef HEAP_H
 
 void swap(struct Node* n1, struct Node* n2){
 	struct Node temp = *n1;
@@ -23,11 +23,11 @@ struct Node* child(struct Node* root, struct Node* parent){
 }
 
 int insert(heap_t* pq, struct Node* n){
-	struct Node* ptr = (*pq).h + (*pq).N;
+	struct Node* ptr = pq->h + pq->N;
 	*ptr = *n;
 	/* printf("Has right: %d, left: %d\n",(*(*ptr).right).freq, (*(*ptr).left).freq); */
-	(*pq).N++;
-	swim( (*pq).h, &((*pq).h[(*pq).N-1]) ); /* The Nth element */
+	pq->N++;
+	swim( pq->h, pq->h + pq->N - 1 ); /* The Nth element */
 }
 
 int delMin(heap_t* pq, struct Node* n){
@@ -96,4 +96,4 @@ void print_heap(heap_t* heap){
 	return 0;
 } */
 
-#endif
+#endif /* End of HEAP_C */
