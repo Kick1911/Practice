@@ -5,7 +5,7 @@ INCLUDE = -Iinclude
 
 huff: Huffman.c $(LIB)/libhuff.a $(LIB)/libhash.a
 	gcc $(CFLAG) -o huff Huffman.c -Llib $(INCLUDE) -lhuff -lhash
-$(LIB)/libhash.a:
+$(LIB)/libhash.a: Hash_Table/hash_table.c Hash_Table/hash_table.h
 	cd Hash_Table; $(MAKE) library
 $(LIB)/libhuff.a: $(LIB)/linked_list.o $(LIB)/priority_queue.o
 	cd lib; ar -cvq libhuff.a *.o
