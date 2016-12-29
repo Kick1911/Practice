@@ -7,19 +7,15 @@ char alloc_h_table(h_table_t* ht, size_t m){
 	ht->size = 0;
 	ht->hash_table = (h_node_t*) malloc(sizeof(h_node_t) * m);
 	int i = 0;while( i < m ){
-		ht->hash_table[i++]= {-1, 0};
+		ht->hash_table[i++] = (h_node_t){-1, 0};
 	}
 	M = m;
 	return ht->hash_table != NULL;
 }
 
 /* CRC variant hash algorithm */
-u_int hash(u_int k){
-	u_int highorder = h & 0xf8000000;
-	h <<= 5;
-	h ^= highorder >> 27;
-	h = (h ^ k) % M;
-	return h;
+static u_int hash(u_int k){
+	return k % M;
 }
 
 char insert_h(h_table_t* ht, u_int k, u_int v){
@@ -37,41 +33,41 @@ char insert_h(h_table_t* ht, u_int k, u_int v){
 	return 0;
 }
 
-u_int lookup(h_table_t* ht, u_int k){
-	u_int hk = hash(k);
-	while( ht->hash_table[hk].key != -1 &&
-			ht->hash_table[hk].key != k ){ /* This is a problem */
-		hk = (hk+1) % M; /* Can be infinite if hash table is full */
-		printf("key: %d, hash: %d\n", ht->hash_table[hk].key, hk );
-	}
-	return ht->hash_table[hk].value;
-}
-
 static void display(h_table_t* ht){
 	int i = 0;while( i < M )
 		printf("%d ",ht->hash_table[i++].value);
 	printf("\n");
 }
 
+u_int lookup(h_table_t* ht, u_int k){
+	u_int hk = hash(k);
+	while( ht->hash_table[hk].key != -1 &&
+			ht->hash_table[hk].key != k ){ /* This is a problem */
+		hk = (hk+1) % M; /* Can be infinite if hash table is full */
+	}
+	return ht->hash_table[hk].value;
+}
+
 #ifdef STATIC
 static
 #endif
 int main(void){
+	u_int cantor;
 	h_table_t ht;
 	size_t s = 11;
 	alloc_h_table(&ht, s);
 	int start = 76;
 	int j = start + s;
 	int i = start; while( i < start + s ){
-		double ratio = ((double)i / (double)j) * 1000;
-		printf("%d-%d, ratio: %d\n", i, j, (u_int)ratio);
-		insert_h(&ht, (u_int)ratio, i);
+		cantor = (i+j)*(i+j+1)/2 + j; /* Cantor Pairing function */
+		printf("%d-%d, cantor: %d\n", i, j, cantor);
+		insert_h(&ht, cantor, i);
 		i++; j--;
 	}
 	display(&ht);
 	int a = 84, b =79;
-	double ratio = ((double)a / (double)b) * 1000;
-	printf("Probing %d-%d: %d\n",a, b, lookup(&ht, (u_int)ratio));
+	u_int ratio = (a+b)*(a+b+1)/2 + b;
+	printf("Probing %d-%d: %d\n",a, b, lookup(&ht, cantor));
 	printf("collisions: %d, percentage: %f\n", collisions, (double)collisions / (double)s);
 	return 0;
 }

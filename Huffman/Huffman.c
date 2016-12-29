@@ -4,7 +4,7 @@
 
 #define FREQ_SIZE (125)
 #define NUM_OF_CHAR (27)
-#define SHORT_SIZE (15)
+#define SHORT_SIZE (16)
 
 int freq[FREQ_SIZE];
 
@@ -82,13 +82,15 @@ int construct_block(code_t c, ushort* bin_p){
 
 int output_bin(FILE* fp, code_t* codes, char* text, size_t size){
 	ushort bin = 0, result;
-	u_int i;
+	u_int i, a, cantor;
 	h_table_t ht;
 	alloc_h_table(&ht, 81);
 	i = 0;while( i < FREQ_SIZE ){
 		if( codes[i].bits != 0 ){
-			u_int ratio = (u_int) (((double)codes[i].code / (double)codes[i].bits) * 1000);
-			insert_h(&ht, ratio, i);
+			a = codes[i].code + codes[i].bits;
+			cantor = a*(a+1)/2 + codes[i].bits; /* Cantor Pairing function */
+			printf("Char: %c, code-bits: %d-%d\n", i, codes[i].code, codes[i].bits);
+			insert_h(&ht, cantor, i);
 		}
 		i++;
 	}
@@ -140,24 +142,29 @@ int compress(char* buffer, size_t l_size){
 
 int decompress(FILE* fp, size_t l_size){
 	ushort bits, mask;
-	u_int size, ratio, result;
+	u_int size, cantor, result, count = 0;
 	h_table_t ht;
 	alloc_h_table(&ht, 81);
 	fread(&size, sizeof(u_int), 1, fp);
 	fread(ht.hash_table, sizeof(h_node_t), 81, fp);
 	size_t text_size = (l_size - ftell(fp))/2; /* Each block is 2 bytes */
-	while( !feof(fp) ){
+	while( !feof(fp) && count < 5 ){
 		ushort temp;
 		fread(&temp, sizeof(ushort), 1, fp);
-		bits = 1;
+		printf("temp: %d\n", temp);
 		do{
-			mask = 1;
-			mask = (mask << bits) - 1 & temp >> (SHORT_SIZE - bits);
-			ratio = (u_int) (((double)mask / (double)bits) * 1000);
-			++bits; /* build buffer */
-			/* temp <<= bits; */
-		}while( !(result = lookup(&ht, ratio)) );
-		printf("%c",(char)result);
+			bits = 1;
+			do{
+				mask = 1;
+				mask = (mask << bits) - 1 & temp >> (SHORT_SIZE - bits);
+				cantor = (mask+bits)*(mask+bits+1)/2 + bits;
+				printf("mask: %d, bits: %d, ratio: %d\n", mask, bits, cantor);
+				++bits;
+			}while( !(result = lookup(&ht, cantor)) && bits < 5 );
+			temp <<= bits;
+			printf("%c",(char)result);
+		}while( temp );
+		++count;
 	}
 	printf("\n");
 	return 0;

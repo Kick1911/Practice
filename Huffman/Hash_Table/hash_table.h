@@ -5,7 +5,6 @@
 #include <string.h>
 
 typedef unsigned int u_int;
-static u_int h = 0;
 static u_int M;
 static u_int collisions = 0;
 
