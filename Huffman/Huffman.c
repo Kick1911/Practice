@@ -5,14 +5,16 @@
 #define FREQ_SIZE (125)
 #define NUM_OF_CHAR (27)
 #define SHORT_SIZE (16)
-
-int freq[FREQ_SIZE];
-
 typedef unsigned short ushort;
 typedef struct code{
 	char bits;
 	int code;
 }code_t;
+
+int freq[FREQ_SIZE];
+ushort bit_buffer = 0;
+code_t leftovers = (code_t){0, 0};
+
 
 void display(int* array){
 	int i = 0;
@@ -58,25 +60,22 @@ struct Node* build_trie(heap_t* pq, int* array, struct Node* root){
 }
 
 int construct_block(code_t c, ushort* bin_p){
-	ushort bin = *bin_p;
-	int limit = 1 << (sizeof(ushort) * 8);
-
-	int i = c.bits, int_code = c.code;
-	while( i >= 0 && (bin << 1) < limit){
-		if( (int_code >> i) ^ 0 ){   /* Equals 1 */
-			bin <<= 1;
-			bin++;
-		}
-		else if( (int_code >> i) ^ 1 ) /* Equals 0 */
-			bin <<= 1;
-		else
-			fprintf(stderr,"Corrupt code\n"),exit(2);
-		i--;
+	if( *bin_p == 0 ){
+		*bin_p = (*bin_p << leftovers.bits) ^ leftovers.code;
+		bit_buffer += leftovers.bits;
 	}
+	if( bit_buffer + c.bits >= SHORT_SIZE ){
+		ushort temp = bit_buffer + c.bits - (SHORT_SIZE - 1);
+		leftovers.code = c.code & (1 << temp) - 1;
+		leftovers.bits = temp;
+		c.bits -= temp;
+		c.code >>= temp;
+	}
+	*bin_p = (*bin_p << c.bits) ^ c.code;
+	bit_buffer += c.bits;
 
-	*bin_p = bin;
-	if( bin << 1 >= limit )
-		return 0;
+	if( bit_buffer == SHORT_SIZE - 1)
+		return (bit_buffer = 0);
 	return 1;
 }
 
@@ -171,29 +170,18 @@ int decompress(FILE* fp, size_t l_size){
 }
 
 void test(){
-	int i = 0;
-	int array[8] = {15,13,80,51,40,40,60,120};
-	heap_t heap;
-	heap.h = ALLOC_HEAP(10);
-	heap.N = 0;
-	struct Node a, b;
-	struct Node n;
-	struct Node new_node;
-	n.data = array[0];
-	n.freq = 159;
-	a.data = array[1];
-	a.freq = 162;
-	b.data = array[2];
-	b.freq = 132;
-	n.left = &a;
-	n.right = &b;
-	swap(n.left, n.right);
-	printf("BEFORE. parent: %d, left: %d, right: %d\n",n.freq,(*n.left).freq,(*n.right).freq);
-	insert(&heap, &n);
-	delMin(&heap, &new_node);
-	printf("AFTER. parent: %d, left: %d, right: %d\n",new_node.freq,(*new_node.left).freq,(*new_node.right).freq);
-	print_heap(&heap);
-	free(heap.h);
+	ushort bin = 0;
+	code_t c = (code_t){8, 3};
+	construct_block(c, &bin);
+	c = (code_t){5, 5};
+	construct_block(c, &bin);
+	c = (code_t){4, 7};
+	construct_block(c, &bin);
+	printf("%d\n",bin);
+	bin = 0;
+	c = (code_t){4, 5};
+	construct_block(c, &bin);
+	printf("%d\n",bin);
 }
 
 int main(int argc, char** argv){
@@ -202,6 +190,8 @@ int main(int argc, char** argv){
 	char* buffer;
 	size_t result;
 
+	test();
+	exit(0);
 	pfile = fopen(argv[2],"rb");
 	if( pfile == NULL ){ fprintf(stderr,"File not found.\n"); exit(1);}
 	fseek(pfile, 0, SEEK_END);
