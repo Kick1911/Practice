@@ -63,9 +63,10 @@ int construct_block(code_t c, ushort* bin_p){
 	if( *bin_p == 0 ){
 		*bin_p = (*bin_p << leftovers.bits) ^ leftovers.code;
 		bit_buffer += leftovers.bits;
+		leftovers = (code_t){0, 0};
 	}
 	if( bit_buffer + c.bits >= SHORT_SIZE ){
-		ushort temp = bit_buffer + c.bits - (SHORT_SIZE - 1);
+		ushort temp = bit_buffer + c.bits - SHORT_SIZE;
 		leftovers.code = c.code & (1 << temp) - 1;
 		leftovers.bits = temp;
 		c.bits -= temp;
@@ -74,7 +75,7 @@ int construct_block(code_t c, ushort* bin_p){
 	*bin_p = (*bin_p << c.bits) ^ c.code;
 	bit_buffer += c.bits;
 
-	if( bit_buffer == SHORT_SIZE - 1)
+	if( bit_buffer == SHORT_SIZE)
 		return (bit_buffer = 0);
 	return 1;
 }
@@ -139,49 +140,66 @@ int compress(char* buffer, size_t l_size){
 	return 0;
 }
 
+u_int find_code(h_table_t *ht, ushort* temp, ushort* temp_bits, code_t* c){
+	ushort cantor, bits = 0, mask;
+	do{
+		++bits;
+		mask = (c->code << bits) ^ *temp >> (SHORT_SIZE - bits);
+		cantor = (mask+bits+c->bits)*(mask+bits+c->bits+1)/2 + bits + c->bits; /* Cantor Pairing function */
+		/* printf("buffer: %d, bits: %d\n", mask, bits + c->bits); */
+	}while( !check(ht, cantor) && bits < *temp_bits ); /* Debug this infinite bit thing */
+	c->bits = bits;
+	c->code = mask;
+	*temp <<= bits;
+	*temp_bits -= bits;
+	return lookup(ht, cantor);
+}
+
 int decompress(FILE* fp, size_t l_size){
-	ushort bits, mask;
-	u_int size, cantor, result, count = 0;
+	ushort result, temp;
+	short temp_bits;
+	code_t c = (code_t) {0, 0};
+	u_int size;
 	h_table_t ht;
 	alloc_h_table(&ht, 81);
 	fread(&size, sizeof(u_int), 1, fp);
 	fread(ht.hash_table, sizeof(h_node_t), 81, fp);
 	size_t text_size = (l_size - ftell(fp))/2; /* Each block is 2 bytes */
-	while( !feof(fp) && count < 5 ){
-		ushort temp;
+	while( text_size ){
 		fread(&temp, sizeof(ushort), 1, fp);
-		printf("temp: %d\n", temp);
-		do{
-			bits = 1;
-			do{
-				mask = 1;
-				mask = (mask << bits) - 1 & temp >> (SHORT_SIZE - bits);
-				cantor = (mask+bits)*(mask+bits+1)/2 + bits;
-				printf("mask: %d, bits: %d, ratio: %d\n", mask, bits, cantor);
-				++bits;
-			}while( !(result = lookup(&ht, cantor)) && bits < 5 );
-			temp <<= bits;
-			printf("%c",(char)result);
-		}while( temp );
-		++count;
+		temp_bits = SHORT_SIZE;
+		/* printf("temp: %d\n", temp); */
+		while( temp_bits > 0 ){
+			result = find_code(&ht, &temp, &temp_bits, &c);
+			if( result ){
+				printf("%c",(char)result);
+				c.code = 0;c.bits = 0;
+			}
+		}
+		text_size--;
 	}
 	printf("\n");
 	return 0;
 }
 
 void test(){
-	ushort bin = 0;
-	code_t c = (code_t){8, 3};
+	ushort bin = 0, result;
+	code_t c = (code_t){2, 2};
 	construct_block(c, &bin);
-	c = (code_t){5, 5};
+	c = (code_t){2, 1};
 	construct_block(c, &bin);
-	c = (code_t){4, 7};
+	c = (code_t){2, 3};
 	construct_block(c, &bin);
-	printf("%d\n",bin);
-	bin = 0;
-	c = (code_t){4, 5};
+	c = (code_t){4, 2};
 	construct_block(c, &bin);
-	printf("%d\n",bin);
+	c = (code_t){3, 0};
+	construct_block(c, &bin);
+	c = (code_t){2, 2};
+	result = construct_block(c, &bin);
+	printf("%d: %d\n",bin, result);
+	c = (code_t){2, 3};
+	result = construct_block(c, &bin);
+	printf("%d: %d\n",bin, result);
 }
 
 int main(int argc, char** argv){
@@ -190,8 +208,6 @@ int main(int argc, char** argv){
 	char* buffer;
 	size_t result;
 
-	test();
-	exit(0);
 	pfile = fopen(argv[2],"rb");
 	if( pfile == NULL ){ fprintf(stderr,"File not found.\n"); exit(1);}
 	fseek(pfile, 0, SEEK_END);

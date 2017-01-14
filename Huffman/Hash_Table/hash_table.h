@@ -29,6 +29,7 @@ static void resize(h_table_t* ht, size_t m){
 }
 char insert_h(h_table_t*, u_int, u_int);
 u_int lookup(h_table_t*, u_int);
+char check(h_table_t*, u_int);
 static u_int hash(u_int);
 
 #endif

@@ -48,6 +48,15 @@ u_int lookup(h_table_t* ht, u_int k){
 	return ht->hash_table[hk].value;
 }
 
+char check(h_table_t* ht, u_int k){
+	u_int hk = hash(k);
+	while( ht->hash_table[hk].key != -1 &&
+			ht->hash_table[hk].key != k ){ /* This is a problem */
+		hk = (hk+1) % M; /* Can be infinite if hash table is full */
+	}
+	return ht->hash_table[hk].key == k;
+}
+
 #ifdef STATIC
 static
 #endif
